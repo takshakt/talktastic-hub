@@ -10,12 +10,13 @@ interface ButtonsMessageProps {
 
 const ButtonsMessage: React.FC<ButtonsMessageProps> = ({ buttons, onButtonClick }) => {
   return (
-    <div className="flex flex-wrap gap-2 mt-2">
+    <div className="flex flex-wrap gap-2 mt-3">
       {buttons.map((button, index) => (
         <Button
           key={index}
           variant="outline"
           size="sm"
+          className="rounded-full transition-all hover:bg-primary hover:text-white"
           onClick={() => onButtonClick(button.value, button.action)}
         >
           {button.text}

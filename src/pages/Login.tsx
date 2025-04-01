@@ -19,7 +19,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
-import { Separator } from '@/components/ui/separator';
+import { LogIn } from 'lucide-react';
 
 // Schema for login validation
 const loginSchema = z.object({
@@ -30,7 +30,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 const Login: React.FC = () => {
-  const { login, loginWithCredentials, isLoading } = useAuth();
+  const { login, loginWithCredentials, isLoading, initiateOAuthLogin, oAuthConfig } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [authLoading, setAuthLoading] = useState(false);
@@ -46,6 +46,18 @@ const Login: React.FC = () => {
   });
   
   const handleOAuth = () => {
+    if (oAuthConfig && oAuthConfig.clientId) {
+      initiateOAuthLogin();
+    } else {
+      toast({
+        title: "OAuth Not Configured",
+        description: "Please configure your Authentik OAuth settings in your profile first.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const handleDemoAuth = () => {
     login('/chat');
     navigate('/chat');
   };
@@ -69,9 +81,9 @@ const Login: React.FC = () => {
   };
   
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader className="space-y-1">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100">
+      <Card className="w-full max-w-md shadow-lg border-0">
+        <CardHeader className="space-y-1 pb-4">
           <CardTitle className="text-2xl font-bold text-center">Talktastic Hub</CardTitle>
           <CardDescription className="text-center">
             Log in to start chatting with our AI assistant
@@ -79,9 +91,10 @@ const Login: React.FC = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-4">
-              <TabsTrigger value="local">Email & Password</TabsTrigger>
-              <TabsTrigger value="oauth">Authentik OAuth</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 mb-4">
+              <TabsTrigger value="local">Email</TabsTrigger>
+              <TabsTrigger value="authentik">Authentik</TabsTrigger>
+              <TabsTrigger value="demo">Demo</TabsTrigger>
             </TabsList>
             
             <TabsContent value="local" className="space-y-4">
@@ -135,21 +148,49 @@ const Login: React.FC = () => {
               </div>
             </TabsContent>
             
-            <TabsContent value="oauth" className="space-y-4">
-              <div className="space-y-2">
+            <TabsContent value="authentik" className="space-y-4">
+              <div className="space-y-4">
                 <p className="text-sm text-gray-500 text-center">
-                  In a production app, this would redirect to Authentik for OIDC/OAuth2 login.
-                  For this demo, we'll simulate the login flow.
+                  {oAuthConfig && oAuthConfig.clientId 
+                    ? "Login with your Authentik credentials"
+                    : "You need to configure your Authentik OAuth settings first"}
                 </p>
+                
+                <Button 
+                  className="w-full"
+                  onClick={handleOAuth}
+                  disabled={isLoading || !oAuthConfig || !oAuthConfig.clientId}
+                >
+                  <LogIn className="mr-2 h-4 w-4" />
+                  {isLoading ? 'Logging in...' : 'Log in with Authentik'}
+                </Button>
+                
+                {(!oAuthConfig || !oAuthConfig.clientId) && (
+                  <div className="text-center mt-2">
+                    <p className="text-sm text-gray-500">
+                      <Link to="/profile" className="text-primary font-medium hover:underline">
+                        Configure Authentik OAuth
+                      </Link>
+                    </p>
+                  </div>
+                )}
               </div>
-              
-              <Button 
-                className="w-full" 
-                onClick={handleOAuth}
-                disabled={isLoading}
-              >
-                {isLoading ? 'Logging in...' : 'Log in with Authentik'}
-              </Button>
+            </TabsContent>
+            
+            <TabsContent value="demo" className="space-y-4">
+              <div className="space-y-4">
+                <p className="text-sm text-gray-500 text-center">
+                  For demonstration purposes only. This will create a demo user.
+                </p>
+                
+                <Button 
+                  className="w-full" 
+                  onClick={handleDemoAuth}
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Logging in...' : 'Demo Login'}
+                </Button>
+              </div>
             </TabsContent>
           </Tabs>
         </CardContent>

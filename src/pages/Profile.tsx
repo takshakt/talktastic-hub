@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import UserProfileForm from '@/components/user/UserProfileForm';
 import WebhookSettings from '@/components/settings/WebhookSettings';
+import OAuthSettings from '@/components/settings/OAuthSettings';
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -47,6 +48,7 @@ const Profile: React.FC = () => {
           <TabsList className="mb-6">
             <TabsTrigger value="profile">Profile Details</TabsTrigger>
             <TabsTrigger value="webhook">Webhook Settings</TabsTrigger>
+            <TabsTrigger value="oauth">Authentik OAuth</TabsTrigger>
           </TabsList>
           
           <TabsContent value="profile">
@@ -75,6 +77,10 @@ const Profile: React.FC = () => {
                 <WebhookSettings />
               </CardContent>
             </Card>
+          </TabsContent>
+          
+          <TabsContent value="oauth">
+            <OAuthSettings />
           </TabsContent>
         </Tabs>
       </div>

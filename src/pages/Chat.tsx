@@ -29,21 +29,23 @@ const Chat: React.FC = () => {
   return (
     <div className="flex flex-col h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-chat-dark text-white p-4 shadow-md">
+      <header className="bg-gradient-to-r from-chat-dark to-blue-900 text-white p-4 shadow-md">
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <MessageSquare className="h-6 w-6" />
+            <div className="bg-white/10 p-2 rounded-lg">
+              <MessageSquare className="h-6 w-6" />
+            </div>
             <h1 className="text-xl font-bold">Talktastic Hub</h1>
           </div>
           
           <div className="flex items-center gap-3">
             <Link to="/profile">
-              <Button variant="ghost" size="sm" className="text-white hover:bg-gray-700">
+              <Button variant="ghost" size="sm" className="text-white hover:bg-white/10 transition-colors">
                 <Settings className="h-4 w-4 mr-2" />
                 Settings
               </Button>
             </Link>
-            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-white hover:bg-gray-700">
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-white hover:bg-white/10 transition-colors">
               <LogOut className="h-4 w-4 mr-2" />
               Logout
             </Button>
@@ -52,7 +54,7 @@ const Chat: React.FC = () => {
       </header>
       
       {/* Chat content */}
-      <div className="flex-1 overflow-hidden container mx-auto max-w-4xl my-6 rounded-lg shadow-lg bg-white border border-gray-100">
+      <div className="flex-1 overflow-hidden container mx-auto max-w-4xl my-6">
         <ChatContainer />
       </div>
     </div>

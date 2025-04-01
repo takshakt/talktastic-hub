@@ -14,6 +14,15 @@ export type User = {
   sessionId: string;
 } | null;
 
+interface OAuthConfig {
+  clientId: string;
+  redirectUri: string;
+  authorizeEndpoint: string;
+  tokenEndpoint: string;
+  userInfoEndpoint: string;
+  scope: string;
+}
+
 type AuthContextType = {
   user: User;
   login: (redirectUri: string) => void;
@@ -23,6 +32,18 @@ type AuthContextType = {
   isAuthenticated: boolean;
   isLoading: boolean;
   updateUserProfile: (data: Partial<User>) => void;
+  configureOAuth: (config: OAuthConfig) => void;
+  initiateOAuthLogin: () => void;
+  oAuthConfig: OAuthConfig | null;
+};
+
+const DEFAULT_OAUTH_CONFIG: OAuthConfig = {
+  clientId: '',
+  redirectUri: `${window.location.origin}/oauth-callback`,
+  authorizeEndpoint: '',
+  tokenEndpoint: '',
+  userInfoEndpoint: '',
+  scope: 'openid profile email',
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,6 +59,7 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [oAuthConfig, setOAuthConfig] = useState<OAuthConfig | null>(null);
   const { toast } = useToast();
 
   // Generate a unique session ID for the chat
@@ -45,11 +67,119 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
   };
 
+  // Configure OAuth settings
+  const configureOAuth = (config: OAuthConfig) => {
+    const fullConfig = { ...DEFAULT_OAUTH_CONFIG, ...config };
+    setOAuthConfig(fullConfig);
+    localStorage.setItem('talktastic_oauth_config', JSON.stringify(fullConfig));
+    toast({
+      title: "OAuth Configuration Updated",
+      description: "Your Authentik OAuth configuration has been saved.",
+    });
+  };
+
+  // Initiate OAuth login flow
+  const initiateOAuthLogin = () => {
+    if (!oAuthConfig) {
+      toast({
+        title: "OAuth Not Configured",
+        description: "Please configure OAuth in your settings first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Create and store a random state parameter for security
+    const state = Math.random().toString(36).substring(2, 15);
+    localStorage.setItem('talktastic_oauth_state', state);
+
+    // Construct the authorization URL
+    const authUrl = new URL(oAuthConfig.authorizeEndpoint);
+    authUrl.searchParams.append('client_id', oAuthConfig.clientId);
+    authUrl.searchParams.append('redirect_uri', oAuthConfig.redirectUri);
+    authUrl.searchParams.append('response_type', 'code');
+    authUrl.searchParams.append('scope', oAuthConfig.scope);
+    authUrl.searchParams.append('state', state);
+
+    // Redirect the user to the authorization endpoint
+    window.location.href = authUrl.toString();
+  };
+
+  // Handle OAuth callback
+  const handleOAuthCallback = async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const state = urlParams.get('state');
+    const storedState = localStorage.getItem('talktastic_oauth_state');
+
+    // Check if this is an OAuth callback
+    if (!code || !state) {
+      return false;
+    }
+
+    // Validate state to prevent CSRF attacks
+    if (state !== storedState) {
+      toast({
+        title: "Authentication Error",
+        description: "Invalid state parameter. The request may have been tampered with.",
+        variant: "destructive",
+      });
+      return true;
+    }
+
+    try {
+      setIsLoading(true);
+      
+      // In a real implementation, we would exchange the code for tokens
+      // For this demo, we'll simulate a successful login
+      console.log('OAuth code received:', code);
+      
+      const mockUser: User = {
+        id: '12345',
+        name: 'Authentik User',
+        email: 'oauth@example.com',
+        picture: 'https://ui-avatars.com/api/?name=Authentik+User&background=0D8ABC&color=fff',
+        sessionId: generateSessionId()
+      };
+      
+      // Store in localStorage for persistence
+      localStorage.setItem('talktastic_user', JSON.stringify(mockUser));
+      setUser(mockUser);
+      
+      // Clear OAuth state
+      localStorage.removeItem('talktastic_oauth_state');
+      
+      toast({
+        title: "Login successful",
+        description: "Welcome to Talktastic Hub!",
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('OAuth login failed:', error);
+      toast({
+        title: "OAuth Login Failed",
+        description: "We couldn't complete the authentication. Please try again.",
+        variant: "destructive",
+      });
+      return true;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Check for existing auth on mount
   useEffect(() => {
     // For now, we'll use localStorage to simulate auth state
     const checkAuth = async () => {
       try {
+        // Check if this is an OAuth callback first
+        const isOAuthCallback = await handleOAuthCallback();
+        if (isOAuthCallback) {
+          // If we handled an OAuth callback, we're done
+          return;
+        }
+        
         const storedUser = localStorage.getItem('talktastic_user');
         
         if (storedUser) {
@@ -59,6 +189,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             parsedUser.sessionId = generateSessionId();
           }
           setUser(parsedUser);
+        }
+        
+        // Load OAuth config if exists
+        const storedOAuthConfig = localStorage.getItem('talktastic_oauth_config');
+        if (storedOAuthConfig) {
+          setOAuthConfig(JSON.parse(storedOAuthConfig));
         }
       } catch (error) {
         console.error('Auth check failed:', error);
@@ -254,6 +390,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: !!user,
         isLoading,
         updateUserProfile,
+        configureOAuth,
+        initiateOAuthLogin,
+        oAuthConfig,
       }}
     >
       {children}

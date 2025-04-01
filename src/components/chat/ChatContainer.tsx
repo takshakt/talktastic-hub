@@ -5,15 +5,19 @@ import chatService, { Message } from '@/services/chatService';
 import { useAuth } from '@/contexts/AuthContext';
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
+import { ArrowDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const ChatContainer: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFirstMessage, setIsFirstMessage] = useState(true);
   const [geolocation, setGeolocation] = useState<GeolocationPosition | null>(null);
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   
   // Request geolocation permission on component mount
   useEffect(() => {
@@ -36,8 +40,30 @@ const ChatContainer: React.FC = () => {
   
   // Scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    scrollToBottom();
   }, [messages]);
+  
+  // Check if scroll button should be shown
+  useEffect(() => {
+    const checkScrollPosition = () => {
+      if (!messagesContainerRef.current) return;
+      
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+      
+      setShowScrollButton(!isNearBottom);
+    };
+    
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.addEventListener('scroll', checkScrollPosition);
+      return () => container.removeEventListener('scroll', checkScrollPosition);
+    }
+  }, []);
+  
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
   
   // Handle sending a message
   const handleSendMessage = async (content: string) => {
@@ -159,9 +185,12 @@ const ChatContainer: React.FC = () => {
   }, [messages.length]);
   
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-y-auto px-4 py-4">
-        <div className="space-y-4">
+    <div className="flex flex-col h-full bg-gradient-to-b from-gray-50 to-white rounded-lg shadow-lg">
+      <div 
+        className="flex-1 overflow-y-auto px-4 py-6" 
+        ref={messagesContainerRef}
+      >
+        <div className="space-y-6">
           {messages.map((message) => (
             <ChatMessage 
               key={message.id} 
@@ -171,6 +200,17 @@ const ChatContainer: React.FC = () => {
           ))}
           <div ref={messagesEndRef} />
         </div>
+        
+        {showScrollButton && (
+          <Button
+            onClick={scrollToBottom}
+            size="icon"
+            variant="secondary"
+            className="fixed bottom-24 right-8 rounded-full shadow-md z-10 animate-bounce"
+          >
+            <ArrowDown className="h-4 w-4" />
+          </Button>
+        )}
       </div>
       
       {/* Typing indicator - shown when isSubmitting is true */}
