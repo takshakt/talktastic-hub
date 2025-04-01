@@ -99,31 +99,53 @@ class ChatService {
         console.log('Webhook raw response:', responseText);
         
         let data;
+        let responseContent = '';
+        let responseType: MessageType = 'text';
+        let responseButtons;
+        let responseUrlMetadata;
+        
         try {
           // Only try to parse as JSON if there's actual content
-          data = responseText ? JSON.parse(responseText) : {};
-          console.log('Webhook parsed response:', data);
+          if (responseText && responseText.trim()) {
+            data = JSON.parse(responseText);
+            console.log('Webhook parsed response:', data);
+            
+            // Handle different response formats
+            if (data.output) {
+              // Format: { output: "message text" }
+              responseContent = data.output;
+            } else if (data.content) {
+              // Format: { content: "message text", type: "text" }
+              responseContent = data.content;
+              responseType = data.type || 'text';
+              responseButtons = data.buttons;
+              responseUrlMetadata = data.urlMetadata;
+            } else if (typeof data === 'string') {
+              // Plain string in JSON
+              responseContent = data;
+            } else if (data.message) {
+              // Format: { message: "message text" }
+              responseContent = data.message;
+            } else {
+              // Fallback: stringify the object
+              responseContent = JSON.stringify(data);
+            }
+          } else {
+            responseContent = "No content provided";
+          }
         } catch (parseError) {
           console.error('Error parsing response as JSON:', parseError);
           // If response is not JSON, use the text as content
-          data = { 
-            type: 'text',
-            content: responseText || 'I received your message but could not understand the response.'
-          };
+          responseContent = responseText || 'No content provided';
         }
         
-        // Process the response from webhook
-        const responseType = data.type || 'text';
-        const responseContent = data.content || (typeof data === 'string' ? data : 'No content provided');
-        const responseButtons = data.buttons;
-        const responseUrlMetadata = data.urlMetadata;
-        
+        // Create the message object
         return {
           id: messageId,
           content: responseContent,
           sender: 'bot',
           timestamp,
-          type: responseType as MessageType,
+          type: responseType,
           buttons: responseButtons,
           urlMetadata: responseUrlMetadata
         };
@@ -189,28 +211,47 @@ class ChatService {
         console.log('Button click raw response:', responseText);
         
         let data;
+        let responseContent = '';
+        let responseType: MessageType = 'text';
+        let responseButtons;
+        let responseUrlMetadata;
+        
         try {
-          data = responseText ? JSON.parse(responseText) : {};
-          console.log('Button click parsed response:', data);
+          if (responseText && responseText.trim()) {
+            data = JSON.parse(responseText);
+            console.log('Button click parsed response:', data);
+            
+            // Handle different response formats
+            if (data.output) {
+              responseContent = data.output;
+            } else if (data.content) {
+              responseContent = data.content;
+              responseType = data.type || 'text';
+              responseButtons = data.buttons;
+              responseUrlMetadata = data.urlMetadata;
+            } else if (typeof data === 'string') {
+              responseContent = data;
+            } else if (data.message) {
+              responseContent = data.message;
+            } else {
+              responseContent = JSON.stringify(data);
+            }
+          } else {
+            responseContent = `You selected: ${buttonValue}`;
+          }
         } catch (parseError) {
           console.error('Error parsing button response as JSON:', parseError);
-          data = { 
-            type: 'text',
-            content: responseText || `You selected: ${buttonValue}`
-          };
+          responseContent = responseText || `You selected: ${buttonValue}`;
         }
-        
-        const responseType = data.type || 'text';
-        const responseContent = data.content || (typeof data === 'string' ? data : `You selected: ${buttonValue}`);
         
         return {
           id: Math.random().toString(36).substring(2, 15),
           content: responseContent,
           sender: 'bot',
           timestamp: new Date(),
-          type: responseType as MessageType,
-          buttons: data.buttons,
-          urlMetadata: data.urlMetadata
+          type: responseType,
+          buttons: responseButtons,
+          urlMetadata: responseUrlMetadata
         };
       } catch (fetchError) {
         console.error('Error with button click fetch operation:', fetchError);
