@@ -25,7 +25,7 @@ const userProfileSchema = z.object({
     return !val || (Number.isInteger(num) && num > 0 && num < 120);
   }, { message: 'Age must be a number between 1 and 120' }).optional(),
   location: z.string().optional(),
-  sex: z.enum(['male', 'female', 'other', '']).optional(),
+  sex: z.enum(['male', 'female', 'other', 'prefer_not_to_say']).optional(),
 });
 
 type UserProfileFormValues = z.infer<typeof userProfileSchema>;
@@ -42,7 +42,7 @@ const UserProfileForm: React.FC = () => {
       email: user?.email || '',
       age: user?.age ? String(user.age) : '',
       location: user?.location || '',
-      sex: (user?.sex as any) || '',
+      sex: (user?.sex as any) || 'prefer_not_to_say',
     },
   });
   
@@ -125,7 +125,7 @@ const UserProfileForm: React.FC = () => {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">Prefer not to say</SelectItem>
+                    <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
                     <SelectItem value="male">Male</SelectItem>
                     <SelectItem value="female">Female</SelectItem>
                     <SelectItem value="other">Other</SelectItem>
