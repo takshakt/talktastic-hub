@@ -28,7 +28,7 @@ export interface Message {
 }
 
 // Default webhook URL - in a real app, this would be configurable
-const DEFAULT_WEBHOOK_URL = 'https://n8n.example.com/webhook/chat';
+const DEFAULT_WEBHOOK_URL = 'https://n8n.448.global/webhook/e3783f4d-c79b-419d-93f5-dcd3e8195abc';
 
 class ChatService {
   private webhookUrl: string;
@@ -74,10 +74,10 @@ class ChatService {
         } : null
       };
 
-      // For demo purposes, we'll simulate API responses
-      // In a real implementation, you would uncomment the fetch call below
+      console.log('Sending message to webhook:', this.webhookUrl);
+      console.log('Payload:', JSON.stringify(payload));
       
-      /*
+      // Actually send the request to n8n webhook
       const response = await fetch(this.webhookUrl, {
         method: 'POST',
         headers: {
@@ -90,91 +90,118 @@ class ChatService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
-      */
+      let data;
       
-      // For demonstration purposes, we'll simulate a response
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Randomly choose message type for demo purposes
-      const responseTypes: MessageType[] = ['text', 'image', 'file', 'url', 'buttons'];
-      const randomType = responseTypes[Math.floor(Math.random() * responseTypes.length)];
-      
-      let responseContent = '';
-      let buttons: Button[] | undefined;
-      let urlMetadata: UrlMetadata | undefined;
-      
-      switch (randomType) {
-        case 'text':
-          responseContent = `This is a simulated response to: "${message}"`;
-          break;
-        case 'image':
-          responseContent = 'https://source.unsplash.com/random/400x300';
-          break;
-        case 'file':
-          responseContent = 'example-document.pdf';
-          break;
-        case 'url':
-          responseContent = 'https://lovable.dev';
-          urlMetadata = {
-            title: 'Lovable - Build Web Apps with AI',
-            description: 'Lovable is an AI-powered platform for building web applications.',
-            thumbnail: 'https://lovable.dev/opengraph-image-p98pqg.png',
-            url: 'https://lovable.dev'
-          };
-          break;
-        case 'buttons':
-          responseContent = 'Would you like to continue?';
-          buttons = [
-            { text: 'Yes', value: 'yes', action: 'continue' },
-            { text: 'No', value: 'no', action: 'stop' }
-          ];
-          break;
-        default:
-          responseContent = 'Sorry, I didn\'t understand that.';
+      try {
+        data = await response.json();
+        console.log('Webhook response:', data);
+      } catch (error) {
+        console.log('Could not parse JSON from response, using default text response');
+        data = { 
+          type: 'text',
+          content: 'I received your message but got an unexpected response format.'
+        };
       }
+      
+      // Process the response from webhook
+      const responseType = data.type || 'text';
+      const responseContent = data.content || 'No content provided';
+      const responseButtons = data.buttons;
+      const responseUrlMetadata = data.urlMetadata;
       
       return {
         id: messageId,
         content: responseContent,
         sender: 'bot',
         timestamp,
-        type: randomType,
-        buttons,
-        urlMetadata
+        type: responseType as MessageType,
+        buttons: responseButtons,
+        urlMetadata: responseUrlMetadata
       };
     } catch (error) {
       console.error('Error sending message to webhook:', error);
-      throw error;
+      
+      // Return error message
+      return {
+        id: Math.random().toString(36).substring(2, 15),
+        content: 'Sorry, I encountered an error connecting to the AI service. Please try again later.',
+        sender: 'bot',
+        timestamp: new Date(),
+        type: 'text'
+      };
     }
   }
   
   // Process button interactions
   async handleButtonClick(buttonValue: string, action: string | undefined, user: User): Promise<Message> {
     try {
-      // Simulate processing button click
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Create payload for n8n webhook
+      const payload = {
+        button: {
+          value: buttonValue,
+          action: action
+        },
+        sessionId: user?.sessionId || 'anonymous',
+        timestamp: new Date().toISOString(),
+        user: user ? {
+          id: user.id,
+          name: user.name,
+          email: user.email
+        } : null
+      };
+
+      // Send button click to webhook
+      const response = await fetch(this.webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (error) {
+        data = { 
+          type: 'text',
+          content: `Selected: ${buttonValue}`
+        };
+      }
+      
+      const responseType = data.type || 'text';
+      const responseContent = data.content || `You selected: ${buttonValue}`;
       
       return {
         id: Math.random().toString(36).substring(2, 15),
-        content: `You selected: ${buttonValue}${action ? ` (action: ${action})` : ''}`,
+        content: responseContent,
+        sender: 'bot',
+        timestamp: new Date(),
+        type: responseType as MessageType,
+        buttons: data.buttons,
+        urlMetadata: data.urlMetadata
+      };
+    } catch (error) {
+      console.error('Error handling button click:', error);
+      return {
+        id: Math.random().toString(36).substring(2, 15),
+        content: `You selected: ${buttonValue}. (Error: Could not connect to AI service)`,
         sender: 'bot',
         timestamp: new Date(),
         type: 'text'
       };
-    } catch (error) {
-      console.error('Error handling button click:', error);
-      throw error;
     }
   }
   
   // Fetch URL metadata
   async fetchUrlMetadata(url: string): Promise<UrlMetadata> {
     try {
-      // In a real implementation, you would call a metadata service
-      // For demo purposes, we'll return mock data
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      // In a real implementation, we would fetch metadata from the URL
+      // For now, returning mock data
       return {
         title: 'Website Title',
         description: 'This is a description of the linked website content.',

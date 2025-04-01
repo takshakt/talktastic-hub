@@ -18,6 +18,8 @@ type AuthContextType = {
   user: User;
   login: (redirectUri: string) => void;
   logout: () => void;
+  registerUser: (name: string, email: string, password: string) => Promise<void>;
+  loginWithCredentials: (email: string, password: string) => Promise<void>;
   isAuthenticated: boolean;
   isLoading: boolean;
   updateUserProfile: (data: Partial<User>) => void;
@@ -72,6 +74,90 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     checkAuth();
   }, [toast]);
+
+  // Register a new user
+  const registerUser = async (name: string, email: string, password: string) => {
+    try {
+      setIsLoading(true);
+      
+      // Check if user already exists
+      const existingUsers = JSON.parse(localStorage.getItem('talktastic_users') || '[]');
+      const userExists = existingUsers.some((u: any) => u.email === email);
+      
+      if (userExists) {
+        throw new Error('User with this email already exists');
+      }
+      
+      // Create new user
+      const newUser = {
+        id: Math.random().toString(36).substring(2, 15),
+        name,
+        email,
+        password, // In a real app, this would be hashed
+        sessionId: generateSessionId(),
+        createdAt: new Date().toISOString()
+      };
+      
+      // Save to "database" (localStorage)
+      existingUsers.push(newUser);
+      localStorage.setItem('talktastic_users', JSON.stringify(existingUsers));
+      
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Registration failed:', error);
+      return Promise.reject(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Login with email and password
+  const loginWithCredentials = async (email: string, password: string) => {
+    try {
+      setIsLoading(true);
+      
+      // Get users from "database"
+      const existingUsers = JSON.parse(localStorage.getItem('talktastic_users') || '[]');
+      const user = existingUsers.find((u: any) => u.email === email && u.password === password);
+      
+      if (!user) {
+        throw new Error('Invalid email or password');
+      }
+      
+      // Create session
+      const sessionUser: User = {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        sessionId: generateSessionId(),
+        // These fields will be empty until the user updates their profile
+        age: user.age,
+        location: user.location,
+        sex: user.sex
+      };
+      
+      // Store in localStorage for persistence
+      localStorage.setItem('talktastic_user', JSON.stringify(sessionUser));
+      setUser(sessionUser);
+      
+      toast({
+        title: "Login successful",
+        description: "Welcome to Talktastic Hub!",
+      });
+      
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Login failed:', error);
+      toast({
+        title: "Login failed",
+        description: "Invalid email or password. Please try again.",
+        variant: "destructive",
+      });
+      return Promise.reject(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Login function - in a real app, this would redirect to Authentik
   const login = (redirectUri: string) => {
@@ -163,6 +249,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         login,
         logout,
+        registerUser,
+        loginWithCredentials,
         isAuthenticated: !!user,
         isLoading,
         updateUserProfile,
