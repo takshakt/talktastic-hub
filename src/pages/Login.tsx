@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,7 +19,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
-import { LogIn } from 'lucide-react';
+import { LogIn, MessageSquare } from 'lucide-react';
 
 // Schema for login validation
 const loginSchema = z.object({
@@ -81,120 +81,141 @@ const Login: React.FC = () => {
   };
   
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100">
-      <Card className="w-full max-w-md shadow-lg border-0">
-        <CardHeader className="space-y-1 pb-4">
-          <CardTitle className="text-2xl font-bold text-center">Talktastic Hub</CardTitle>
-          <CardDescription className="text-center">
-            Log in to start chatting with our AI assistant
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-4">
-              <TabsTrigger value="local">Email</TabsTrigger>
-              <TabsTrigger value="authentik">Authentik</TabsTrigger>
-              <TabsTrigger value="demo">Demo</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="local" className="space-y-4">
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input placeholder="you@example.com" type="email" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Your password" type="password" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+    <div className="min-h-screen flex flex-col items-center justify-center bg-emerald-gradient relative overflow-hidden">
+      {/* Background wave pattern */}
+      <div className="absolute inset-0 bg-emerald-wave bg-cover bg-center opacity-20 mix-blend-soft-light"></div>
+      
+      {/* Animated glow effects */}
+      <div className="absolute top-1/3 left-1/4 w-96 h-96 bg-emerald-glow rounded-full filter blur-3xl opacity-20 wave-animation"></div>
+      <div className="absolute bottom-1/4 right-1/3 w-72 h-72 bg-emerald-glow rounded-full filter blur-3xl opacity-15 wave-animation" style={{ animationDelay: '2s' }}></div>
+      
+      <div className="emerald-glow z-10">
+        <Card className="w-full max-w-md shadow-xl border-0 bg-dark-800/80 backdrop-blur-md">
+          <CardHeader className="space-y-1 pb-4">
+            <div className="flex justify-center mb-3">
+              <div className="bg-emerald-600/20 p-3 rounded-full">
+                <MessageSquare className="h-8 w-8 text-emerald-400" />
+              </div>
+            </div>
+            <CardTitle className="text-2xl font-bold text-center">Talktastic Hub</CardTitle>
+            <CardDescription className="text-center text-muted-foreground">
+              Log in to start chatting with our AI assistant
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-3 mb-4 bg-dark-700/60">
+                <TabsTrigger value="local" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">Email</TabsTrigger>
+                <TabsTrigger value="authentik" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">Authentik</TabsTrigger>
+                <TabsTrigger value="demo" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">Demo</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="local" className="space-y-4">
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input placeholder="you@example.com" type="email" className="bg-dark-700/60 border-dark-600" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Password</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Your password" type="password" className="bg-dark-700/60 border-dark-600" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <Button 
+                      type="submit" 
+                      className="w-full"
+                      variant="glow"
+                      disabled={authLoading}
+                    >
+                      {authLoading ? 'Signing in...' : 'Sign In'}
+                    </Button>
+                  </form>
+                </Form>
+                
+                <div className="text-center mt-2">
+                  <p className="text-sm text-muted-foreground">
+                    Don't have an account?{' '}
+                    <Link to="/register" className="text-emerald-400 font-medium hover:underline">
+                      Register
+                    </Link>
+                  </p>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="authentik" className="space-y-4">
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground text-center">
+                    {oAuthConfig && oAuthConfig.clientId 
+                      ? "Login with your Authentik credentials"
+                      : "You need to configure your Authentik OAuth settings first"}
+                  </p>
                   
                   <Button 
-                    type="submit" 
                     className="w-full"
-                    disabled={authLoading}
+                    variant="glow"
+                    onClick={handleOAuth}
+                    disabled={isLoading || !oAuthConfig || !oAuthConfig.clientId}
                   >
-                    {authLoading ? 'Signing in...' : 'Sign In'}
+                    <LogIn className="mr-2 h-4 w-4" />
+                    {isLoading ? 'Logging in...' : 'Log in with Authentik'}
                   </Button>
-                </form>
-              </Form>
+                  
+                  {(!oAuthConfig || !oAuthConfig.clientId) && (
+                    <div className="text-center mt-2">
+                      <p className="text-sm text-muted-foreground">
+                        <Link to="/profile" className="text-emerald-400 font-medium hover:underline">
+                          Configure Authentik OAuth
+                        </Link>
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
               
-              <div className="text-center mt-2">
-                <p className="text-sm text-gray-500">
-                  Don't have an account?{' '}
-                  <Link to="/register" className="text-primary font-medium hover:underline">
-                    Register
-                  </Link>
-                </p>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="authentik" className="space-y-4">
-              <div className="space-y-4">
-                <p className="text-sm text-gray-500 text-center">
-                  {oAuthConfig && oAuthConfig.clientId 
-                    ? "Login with your Authentik credentials"
-                    : "You need to configure your Authentik OAuth settings first"}
-                </p>
-                
-                <Button 
-                  className="w-full"
-                  onClick={handleOAuth}
-                  disabled={isLoading || !oAuthConfig || !oAuthConfig.clientId}
-                >
-                  <LogIn className="mr-2 h-4 w-4" />
-                  {isLoading ? 'Logging in...' : 'Log in with Authentik'}
-                </Button>
-                
-                {(!oAuthConfig || !oAuthConfig.clientId) && (
-                  <div className="text-center mt-2">
-                    <p className="text-sm text-gray-500">
-                      <Link to="/profile" className="text-primary font-medium hover:underline">
-                        Configure Authentik OAuth
-                      </Link>
-                    </p>
-                  </div>
-                )}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="demo" className="space-y-4">
-              <div className="space-y-4">
-                <p className="text-sm text-gray-500 text-center">
-                  For demonstration purposes only. This will create a demo user.
-                </p>
-                
-                <Button 
-                  className="w-full" 
-                  onClick={handleDemoAuth}
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Logging in...' : 'Demo Login'}
-                </Button>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+              <TabsContent value="demo" className="space-y-4">
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground text-center">
+                    For demonstration purposes only. This will create a demo user.
+                  </p>
+                  
+                  <Button 
+                    className="w-full" 
+                    variant="glow"
+                    onClick={handleDemoAuth}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Logging in...' : 'Demo Login'}
+                  </Button>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <p className="text-xs text-emerald-500/70 mt-4 text-center z-10">
+        Powered by Authentik and n8n
+      </p>
     </div>
   );
 };

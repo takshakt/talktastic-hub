@@ -16,7 +16,7 @@ const ButtonsMessage: React.FC<ButtonsMessageProps> = ({ buttons, onButtonClick 
           key={index}
           variant="outline"
           size="sm"
-          className="rounded-full transition-all hover:bg-primary hover:text-white"
+          className="rounded-full transition-all border-emerald-700/40 bg-dark-700/40 hover:bg-emerald-600 hover:text-white hover:border-transparent"
           onClick={() => onButtonClick(button.value, button.action)}
         >
           {button.text}
